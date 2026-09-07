@@ -10,18 +10,16 @@ EMAIL_USER = os.getenv("EMAIL_USER")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
 EMAIL_TO = os.getenv("EMAIL_TO")
 
-CLOTHING_SIZES = ["48", "50", "M", "L", "48-50"]
-SHOE_SIZES = ["43", "43 RU", "9.5", "10"]
-
+# Список брендов для проверки
 TARGET_BRANDS = {
-    "tommy-hilfiger": {"name": "Tommy Hilfiger", "type": "clothing", "sizes": CLOTHING_SIZES},
-    "calvin-klein": {"name": "Calvin Klein", "type": "clothing", "sizes": CLOTHING_SIZES},
-    "lacoste": {"name": "Lacoste", "type": "clothing", "sizes": CLOTHING_SIZES},
-    "levis": {"name": "Levi's", "type": "clothing", "sizes": CLOTHING_SIZES},
-    "vans": {"name": "Vans", "type": "all", "sizes": CLOTHING_SIZES + SHOE_SIZES},
-    "adidas": {"name": "Adidas", "type": "shoes", "sizes": SHOE_SIZES},
-    "nike": {"name": "Nike", "type": "shoes", "sizes": SHOE_SIZES},
-    "reebok": {"name": "Reebok", "type": "shoes", "sizes": SHOE_SIZES},
+    "tommy-hilfiger": "Tommy Hilfiger",
+    "calvin-klein": "Calvin Klein",
+    "lacoste": "Lacoste",
+    "levis": "Levi's",
+    "vans": "Vans",
+    "adidas": "Adidas",
+    "nike": "Nike",
+    "reebok": "Reebok",
 }
 
 MIN_DISCOUNT = 50
@@ -34,7 +32,7 @@ def send_email(text):
     msg = MIMEMultipart()
     msg['From'] = EMAIL_USER
     msg['To'] = EMAIL_TO
-    msg['Subject'] = "🔥 Отчет Lamoda Checker"
+    msg['Subject'] = "🔥 Найдены скидки на Ламоде!"
     
     msg.attach(MIMEText(text, 'plain', 'utf-8'))
     
@@ -51,10 +49,10 @@ def check_lamoda():
     ua = UserAgent()
     found_items = []
     
-    print("Начинаем сканирование каталога Lamoda...")
+    print("Начинаем сканирование каталога Ламода...")
 
-    for brand_key, brand_info in TARGET_BRANDS.items():
-        print(f"Проверяем бренд: {brand_info['name']}...")
+    for brand_key, brand_name in TARGET_BRANDS.items():
+        print(f"Проверяем бренд: {brand_name}...")
         url = f"https://www.lamoda.ru/api/v1/recommendations/search?brand={brand_key}&discount_per=50&limit=30"
         
         headers = {
@@ -79,7 +77,7 @@ def check_lamoda():
                         new_price = item.get("price_discount", 0)
                         
                         found_items.append({
-                            "brand": brand_info["name"],
+                            "brand": brand_name,
                             "title": title,
                             "old_price": old_price,
                             "new_price": new_price,
@@ -87,15 +85,15 @@ def check_lamoda():
                             "link": link
                         })
         except Exception as e:
-            print(f"Ошибка запроса: {e}")
+            print(f"Ошибка запроса для {brand_name}: {e}")
             
         time.sleep(2)
 
     if found_items:
         report = f"🔥 Найдены скидки от {MIN_DISCOUNT}%:\n\n"
-        for item in found_items[:10]:
-            report += f"- {item['brand']} — {item['title']}\n"
-            report += f" Цена: {item['old_price']}₽ -> {item['new_price']}₽ (-{item['discount']}%)\n"
+        for item in found_items[:15]:
+            report += f"▪️ {item['brand']} — {item['title']}\n"
+            report += f" Цена: {item['old_price']}₽ ➡️ {item['new_price']}₽ (-{item['discount']}%)\n"
             report += f" Ссылка: {item['link']}\n\n"
     else:
         report = "Проверка завершена. Сегодня новых товаров со скидкой >= 50% по вашим брендам не найдено."
