@@ -1,5 +1,6 @@
 import os 
 import time
+import requests
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -90,7 +91,6 @@ def check_lamoda():
             
         time.sleep(2)
 
-    # Формируем отчет в любом случае
     if found_items:
         report = f"🔥 Найдены скидки от {MIN_DISCOUNT}%:\n\n"
         for item in found_items[:10]:
@@ -100,7 +100,6 @@ def check_lamoda():
     else:
         report = "Проверка завершена. Сегодня новых товаров со скидкой >= 50% по вашим брендам не найдено."
 
-    # Отправляем письмо в любом случае
     send_email(report)
 
 if __name__ == "__main__":
