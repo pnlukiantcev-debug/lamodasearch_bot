@@ -1,7 +1,8 @@
 import os
 import time
 import requests
-from fake_useragent import UserAgentTELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+from fake_useragent import UserAgent
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")# Ваши размеры
 CLOTHING_SIZES = ["48", "50", "M", "L", "48-50"]
 SHOE_SIZES = ["43", "43 RU", "9.5", "10"]# Список брендов, категории и размеры для них
