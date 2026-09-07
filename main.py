@@ -25,14 +25,11 @@ MIN_DISCOUNT = 50
 
 def send_email(text):
     if not EMAIL_USER or not EMAIL_PASSWORD or not EMAIL_TO:
-        print("Ошибка: Не заданы настройки почты в секретах GitHub")
         return
-    
     msg = MIMEMultipart()
     msg['From'] = EMAIL_USER
     msg['To'] = EMAIL_TO
-    msg['Subject'] = "🔥 Найдены скидки на Ламоде!"
-    
+    msg['Subject'] = "🔍 Диагностика Lamoda"
     msg.attach(MIMEText(text, 'plain', 'utf-8'))
     
     try:
@@ -40,20 +37,18 @@ def send_email(text):
         server.login(EMAIL_USER, EMAIL_PASSWORD)
         server.sendmail(EMAIL_USER, EMAIL_TO, msg.as_string())
         server.quit()
-        print("Письмо успешно отправлено!")
     except Exception as e:
-        print(f"Ошибка отправки почты: {e}")
+        print(f"Ошибка отправки: {e}")
 
 def check_lamoda():
     ua = UserAgent()
     found_items = []
+    log_report = "Лог сканирования:\n"
     
     print("Начинаем сканирование каталога Ламода...")
 
     for brand_key, brand_name in TARGET_BRANDS.items():
-        print(f"Проверяем бренд: {brand_name}...")
-        # Запрашиваем каталог бренда без фильтра в URL, чтобы точно получить товары
-        url = f"https://www.lamoda.ru/api/v1/recommendations/search?brand={brand_key}&limit=50"
+        url = f"https://www.lamoda.ru/api/v1/recommendations/search?brand={brand_key}&limit=20"
         
         headers = {
             "User-Agent": ua.random,
@@ -64,13 +59,17 @@ def check_lamoda():
 
         try:
             response = requests.get(url, headers=headers, timeout=10)
+            print(f"Бренд {brand_name}: статус ответа {response.status_code}")
+            log_report += f"{brand_name}: статус {response.status_code}\n"
+            
             if response.status_code == 200:
                 data = response.json()
                 products = data.get("products", [])
+                print(f" Найдено товаров в ответе: {len(products)}")
+                log_report += f" Товаров получено: {len(products)}\n"
                 
                 for item in products:
                     discount = item.get("discount", 0)
-                    # Проверяем скидку внутри скрипта
                     if discount >= MIN_DISCOUNT:
                         title = item.get("name", "Товар")
                         link = "https://www.lamoda.ru" + item.get("url", "")
@@ -86,7 +85,8 @@ def check_lamoda():
                             "link": link
                         })
         except Exception as e:
-            print(f"Ошибка запроса для {brand_name}: {e}")
+            print(f"Ошибка для {brand_name}: {e}")
+            log_report += f"{brand_name}: ошибка {e}\n"
             
         time.sleep(2)
 
@@ -97,7 +97,7 @@ def check_lamoda():
             report += f" Цена: {item['old_price']}₽ ➡️ {item['new_price']}₽ (-{item['discount']}%)\n"
             report += f" Ссылка: {item['link']}\n\n"
     else:
-        report = "Проверка завершена. В текущей выдаче товаров со скидкой >= 50% не обнаружено."
+        report = "Скидки >= 50% не найдены.\n\n" + log_report
 
     send_email(report)
 
