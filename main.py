@@ -10,7 +10,6 @@ EMAIL_USER = os.getenv("EMAIL_USER")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
 EMAIL_TO = os.getenv("EMAIL_TO")
 
-# Список брендов для проверки
 TARGET_BRANDS = {
     "tommy-hilfiger": "Tommy Hilfiger",
     "calvin-klein": "Calvin Klein",
@@ -53,7 +52,8 @@ def check_lamoda():
 
     for brand_key, brand_name in TARGET_BRANDS.items():
         print(f"Проверяем бренд: {brand_name}...")
-        url = f"https://www.lamoda.ru/api/v1/recommendations/search?brand={brand_key}&discount_per=50&limit=30"
+        # Запрашиваем каталог бренда без фильтра в URL, чтобы точно получить товары
+        url = f"https://www.lamoda.ru/api/v1/recommendations/search?brand={brand_key}&limit=50"
         
         headers = {
             "User-Agent": ua.random,
@@ -70,6 +70,7 @@ def check_lamoda():
                 
                 for item in products:
                     discount = item.get("discount", 0)
+                    # Проверяем скидку внутри скрипта
                     if discount >= MIN_DISCOUNT:
                         title = item.get("name", "Товар")
                         link = "https://www.lamoda.ru" + item.get("url", "")
@@ -96,7 +97,7 @@ def check_lamoda():
             report += f" Цена: {item['old_price']}₽ ➡️ {item['new_price']}₽ (-{item['discount']}%)\n"
             report += f" Ссылка: {item['link']}\n\n"
     else:
-        report = "Проверка завершена. Сегодня новых товаров со скидкой >= 50% по вашим брендам не найдено."
+        report = "Проверка завершена. В текущей выдаче товаров со скидкой >= 50% не обнаружено."
 
     send_email(report)
 
