@@ -5,9 +5,9 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from fake_useragent import UserAgent
 
-EMAIL_USER = os.getenv("EMAIL_USER") # Ваша почта (откуда и куда отправляем)
-EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD") # Пароль приложения
-EMAIL_TO = os.getenv("EMAIL_TO") # Почта получателя
+EMAIL_USER = os.getenv("EMAIL_USER")
+EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
+EMAIL_TO = os.getenv("EMAIL_TO")
 
 CLOTHING_SIZES = ["48", "50", "M", "L", "48-50"]
 SHOE_SIZES = ["43", "43 RU", "9.5", "10"]
@@ -27,23 +27,22 @@ MIN_DISCOUNT = 50
 
 def send_email(text):
     if not EMAIL_USER or not EMAIL_PASSWORD or not EMAIL_TO:
-        print("Не заданы настройки почты в секретах GitHub")
+        print("Ошибка: Не заданы настройки почты в секретах GitHub")
         return
     
     msg = MIMEMultipart()
     msg['From'] = EMAIL_USER
     msg['To'] = EMAIL_TO
-    msg['Subject'] = "🔥 Новые скидки на Lamoda (от 50%)"
+    msg['Subject'] = "🔥 Отчет Lamoda Checker"
     
     msg.attach(MIMEText(text, 'plain', 'utf-8'))
     
     try:
-        # Настройка для Gmail (если используете Яндекс, смените на smtp.yandex.ru и порт 465)
-        server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+        server = smtplib.SMTP_SSL('smtp.yandex.ru', 465)
         server.login(EMAIL_USER, EMAIL_PASSWORD)
         server.sendmail(EMAIL_USER, EMAIL_TO, msg.as_string())
         server.quit()
-        print("Письмо успешно отправлено на почту!")
+        print("Письмо успешно отправлено!")
     except Exception as e:
         print(f"Ошибка отправки почты: {e}")
 
@@ -87,19 +86,22 @@ def check_lamoda():
                             "link": link
                         })
         except Exception as e:
-            print(f"Ошибка: {e}")
+            print(f"Ошибка запроса: {e}")
             
         time.sleep(2)
 
+    # Формируем отчет в любом случае
     if found_items:
-        report = f"Найдены скидки от {MIN_DISCOUNT}%:\n\n"
+        report = f"🔥 Найдены скидки от {MIN_DISCOUNT}%:\n\n"
         for item in found_items[:10]:
             report += f"- {item['brand']} — {item['title']}\n"
             report += f" Цена: {item['old_price']}₽ -> {item['new_price']}₽ (-{item['discount']}%)\n"
             report += f" Ссылка: {item['link']}\n\n"
-        send_email(report)
     else:
-        print("Пока ничего не найдено.")
+        report = "Проверка завершена. Сегодня новых товаров со скидкой >= 50% по вашим брендам не найдено."
+
+    # Отправляем письмо в любом случае
+    send_email(report)
 
 if __name__ == "__main__":
     check_lamoda()
