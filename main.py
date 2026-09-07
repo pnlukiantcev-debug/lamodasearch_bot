@@ -29,7 +29,7 @@ def send_email(text):
     msg = MIMEMultipart()
     msg['From'] = EMAIL_USER
     msg['To'] = EMAIL_TO
-    msg['Subject'] = "🔍 Диагностика Lamoda"
+    msg['Subject'] = "🔥 Отчет Lamoda (Обход защиты)"
     msg.attach(MIMEText(text, 'plain', 'utf-8'))
     
     try:
@@ -48,13 +48,22 @@ def check_lamoda():
     print("Начинаем сканирование каталога Ламода...")
 
     for brand_key, brand_name in TARGET_BRANDS.items():
-        url = f"https://www.lamoda.ru/api/v1/recommendations/search?brand={brand_key}&limit=20"
+        url = f"https://www.lamoda.ru/api/v1/recommendations/search?brand={brand_key}&limit=30"
         
+        # Расширенные заголовки для имитации реального браузера
         headers = {
             "User-Agent": ua.random,
             "Accept": "application/json, text/plain, */*",
-            "Accept-Language": "ru-RU,ru;q=0.9",
-            "Referer": "https://www.lamoda.ru/"
+            "Accept-Language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Referer": "https://www.lamoda.ru/",
+            "Sec-Ch-Ua": '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+            "Sec-Ch-Ua-Mobile": "?0",
+            "Sec-Ch-Ua-Platform": '"Windows"',
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+            "X-Requested-With": "XMLHttpRequest"
         }
 
         try:
@@ -66,7 +75,6 @@ def check_lamoda():
                 data = response.json()
                 products = data.get("products", [])
                 print(f" Найдено товаров в ответе: {len(products)}")
-                log_report += f" Товаров получено: {len(products)}\n"
                 
                 for item in products:
                     discount = item.get("discount", 0)
@@ -88,7 +96,7 @@ def check_lamoda():
             print(f"Ошибка для {brand_name}: {e}")
             log_report += f"{brand_name}: ошибка {e}\n"
             
-        time.sleep(2)
+        time.sleep(3) # Увеличиваем задержку между запросами, чтобы не триггерить защиту
 
     if found_items:
         report = f"🔥 Найдены скидки от {MIN_DISCOUNT}%:\n\n"
@@ -97,7 +105,7 @@ def check_lamoda():
             report += f" Цена: {item['old_price']}₽ ➡️ {item['new_price']}₽ (-{item['discount']}%)\n"
             report += f" Ссылка: {item['link']}\n\n"
     else:
-        report = "Скидки >= 50% не найдены.\n\n" + log_report
+        report = "Сканирование завершено.\n\n" + log_report
 
     send_email(report)
 
