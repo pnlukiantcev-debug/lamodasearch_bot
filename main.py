@@ -5,7 +5,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from fake_useragent import UserAgent
 
-EMAIL_USER = os.getenv("EMAIL_USER") n# Ваша почта (откуда и куда отправляем)
+EMAIL_USER = os.getenv("EMAIL_USER") # Ваша почта (откуда и куда отправляем)
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD") # Пароль приложения
 EMAIL_TO = os.getenv("EMAIL_TO") # Почта получателя
 
