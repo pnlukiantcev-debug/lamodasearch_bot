@@ -1,10 +1,13 @@
 import os 
 import time
-import requests
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from fake_useragent import UserAgent
 
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
-CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+EMAIL_USER = os.getenv("EMAIL_USER") n# Ваша почта (откуда и куда отправляем)
+EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD") # Пароль приложения
+EMAIL_TO = os.getenv("EMAIL_TO") # Почта получателя
 
 CLOTHING_SIZES = ["48", "50", "M", "L", "48-50"]
 SHOE_SIZES = ["43", "43 RU", "9.5", "10"]
@@ -22,22 +25,27 @@ TARGET_BRANDS = {
 
 MIN_DISCOUNT = 50
 
-def send_telegram_message(text):
-    if not TELEGRAM_TOKEN or not CHAT_ID:
-        print("Не заданы токены")
+def send_email(text):
+    if not EMAIL_USER or not EMAIL_PASSWORD or not EMAIL_TO:
+        print("Не заданы настройки почты в секретах GitHub")
         return
     
-    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
-    payload = {
-        "chat_id": CHAT_ID,
-        "text": text,
-        "parse_mode": "Markdown",
-        "disable_web_page_preview": True
-    }
+    msg = MIMEMultipart()
+    msg['From'] = EMAIL_USER
+    msg['To'] = EMAIL_TO
+    msg['Subject'] = "🔥 Новые скидки на Lamoda (от 50%)"
+    
+    msg.attach(MIMEText(text, 'plain', 'utf-8'))
+    
     try:
-        requests.post(url, json=payload, timeout=10)
+        # Настройка для Gmail (если используете Яндекс, смените на smtp.yandex.ru и порт 465)
+        server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+        server.login(EMAIL_USER, EMAIL_PASSWORD)
+        server.sendmail(EMAIL_USER, EMAIL_TO, msg.as_string())
+        server.quit()
+        print("Письмо успешно отправлено на почту!")
     except Exception as e:
-        print(f"Ошибка: {e}")
+        print(f"Ошибка отправки почты: {e}")
 
 def check_lamoda():
     ua = UserAgent()
@@ -84,12 +92,12 @@ def check_lamoda():
         time.sleep(2)
 
     if found_items:
-        report = f"🔥 *Найдены скидки от {MIN_DISCOUNT}%:*\n\n"
+        report = f"Найдены скидки от {MIN_DISCOUNT}%:\n\n"
         for item in found_items[:10]:
-            report += f"▪️ *{item['brand']}* — {item['title']}\n"
-            report += f" Цена: ~~{item['old_price']}₽~~ ➡️ *{item['new_price']}₽* (-{item['discount']}%)\n"
-            report += f" [Ссылка]({item['link']})\n\n"
-        send_telegram_message(report)
+            report += f"- {item['brand']} — {item['title']}\n"
+            report += f" Цена: {item['old_price']}₽ -> {item['new_price']}₽ (-{item['discount']}%)\n"
+            report += f" Ссылка: {item['link']}\n\n"
+        send_email(report)
     else:
         print("Пока ничего не найдено.")
 
